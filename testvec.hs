@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Main where
 
 import Language.C
@@ -21,10 +23,7 @@ parseMyFile input_file = do
 		Right ast      -> return ast
 
 analyze :: CTranslUnit -> IO ()
-analyze ctu = do
-	let (Right (globaldecls,[])) = runTrav_ (analyseAST ctu)
-	forM_ (Map.toList $ gObjs globaldecls) $ \ (ident,decl) -> do
-		case decl of
-			FunctionDef (FunDef (VarDecl (VarName ident _) declattrs ty) stmt nodeinfo) -> do
-				putStrLn $ show ident
-			_ -> return ()
+analyze (CTranslUnit extdecls nodeinfo) = do
+	forM_ extdecls analyseExt
+	globdecls <- liftM globalDefs getDefTable
+forM_ decls $ \ 
