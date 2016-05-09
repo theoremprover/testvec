@@ -4,17 +4,18 @@ module Main where
 
 import Language.C
 import Language.C.System.GCC   -- Preprocessor
-import Language.C.Analysis.TravMonad
-import Language.C.Analysis.AstAnalysis
-import Language.C.Analysis.SemRep
-import Language.C.Analysis.DefTable
+import Language.C.Data.Ident
 import qualified Data.Map as Map
 import Control.Monad
 import System.Environment
+import Text.Printf
+import Text.PrettyPrint
 
 main = do
-	[sourcefile] <- getArgs
-	parseMyFile sourcefile >>= analyze
+	let sourcefile = "vfprintf.i" --[sourcefile] <- getArgs
+	maini sourcefile
+
+maini sourcefile = parseMyFile sourcefile >>= analyze
 
 parseMyFile :: FilePath -> IO CTranslUnit
 parseMyFile input_file = do
@@ -26,15 +27,15 @@ parseMyFile input_file = do
 analyze :: CTranslUnit -> IO ()
 analyze (CTranslUnit extdecls nodeinfo) = do
 	forM_ extdecls $ \case
+		CDeclExt decl   -> analyzeDecl decl
 		CFDefExt fundef -> analyzeFunDef fundef
-		CDeclExt decl -> analyzeDecl decl
-		CAsmExt asm _ -> error "Found CAsmExt"
+		CAsmExt asm _   -> error "Found CAsmExt"
 
 analyzeDecl (CDecl declspecs diss nodeinfo) = do
 	forM_ diss $ \case
-		(Just declr,_,Nothing)
-		
-	[(Maybe (CDeclarator a), Maybe (CInitializer a), Maybe (CExpression a))]
-	print "
+		_ -> return ()
 
-analyzeFunDef (CFunDef declspecs cdeclr cdecls stmt nodeinfo) =
+analyzeFunDef (CFunDef declspecs (CDeclr (Just (Ident name _ _)) _ _ _ _) cdecls stmt nodeinfo) = do
+	print name
+
+showBoth x = putStrLn $ printf "%s :\n  %s\n" (show x) (render $ pretty x)
