@@ -26,23 +26,15 @@ parseMyFile input_file = do
 analyze :: CTranslUnit -> IO ()
 analyze (CTranslUnit extdecls nodeinfo) = do
 	forM_ extdecls $ \case
-		CFDefExt fundef -> handleTravError $ analyseFunDef fundef
-		CDeclExt decl -> return Nothing
+		CFDefExt fundef -> analyzeFunDef fundef
+		CDeclExt decl -> analyzeDecl decl
 		CAsmExt asm _ -> error "Found CAsmExt"
-	getErrors >>= sequence_ . (map print)
 
-	globdefs <- liftM globalDefs getDefTable
-	forM_ (Map.toList $ gObjs globdefs) $ \case
-		(ident,Declaration decl) -> print ident
-		_ -> return ()
+analyzeDecl (CDecl declspecs diss nodeinfo) = do
+	forM_ diss $ \case
+		(Just declr,_,Nothing)
+		
+	[(Maybe (CDeclarator a), Maybe (CInitializer a), Maybe (CExpression a))]
+	print "
 
-{-
-    mapRecoverM_ analyseExt decls
-    -- check we are in global scope afterwards
-    getDefTable >>= \dt -> when (not (inFileScope dt)) $
-        error "Internal Error: Not in filescope after analysis"
-    -- get the global definition table (XXX: remove ?)
-    
-    where
-    mapRecoverM_ f = mapM_ (handleTravError . f)
--}
+analyzeFunDef (CFunDef declspecs cdeclr cdecls stmt nodeinfo) =
