@@ -36,6 +36,10 @@ analyzeDecl (CDecl declspecs diss nodeinfo) = do
 		_ -> return ()
 
 analyzeFunDef (CFunDef declspecs (CDeclr (Just (Ident name _ _)) _ _ _ _) cdecls stmt nodeinfo) = do
+	putStrLn "--------------------------------------"
 	print name
+	paths <- followPaths stmt
+	print paths
 
-showBoth x = putStrLn $ printf "%s :\n  %s\n" (show x) (render $ pretty x)
+followPaths stmt = case stmt of
+	CExpr (Just cexpr) nodeinfo -> 
