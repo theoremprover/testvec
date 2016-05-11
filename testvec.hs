@@ -41,20 +41,27 @@ analyzeDecl (CDecl declspecs diss nodeinfo) = do
 type InputValues a = Any | Ranges [(a,a)]
 	deriving (Show,Eq)
 
+type InputTypes a = Map.Map Ident (CTypeSpecifier a)
+
 class SymbValueRepr a where
 	
+printIdent (Ident name _ _) = putStrLn name
 
-analyzeFunDef (CFunDef declspecs (CDeclr (Just (Ident name _ _)) _ _ _ _) cdecls stmt nodeinfo) = do
+analyzeFunDef (CFunDef declspecs (CDeclr (Just ident) _ _ _ _) cdecls stmt nodeinfo) = do
 	putStrLn "--------------------------------------"
-	print name
-	paths <- followStmt Map.empty stmt
+	printIdent ident
+	paths <- followStmt inputs stmt
 	print paths
-	
-followStmt inputvals stmt = case stmt of
-	CExpr (Just cexpr) nodeinfo -> followExpr inputvals cexpr
+	where
+	inputs = concatMap extracttype declspecs
+	extracttype declspec = case declspec of
+		CTypeSpec ctypespec -> 
+
+followStmt inputs stmt = case stmt of
+	CExpr (Just cexpr) nodeinfo -> followExpr inputs cexpr
 	_ -> notImplYet stmt
 
-followExpr inputvals cexpr = case cexpr of
-	CAssign assignop (CVar (Ident name _ _) _) assignedexpr _ -> 
+followExpr inputs cexpr = case cexpr of
+	CAssign assignop (CVar ident _) assignedexpr _ -> 
 	_ -> notImplYet cexpr
 
