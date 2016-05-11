@@ -24,22 +24,37 @@ parseMyFile input_file = do
 		Left parse_err -> error (show parse_err)
 		Right ast      -> return ast
 
+notImplYet x = error $ show x ++ " not implemented yet"
+
 analyze :: CTranslUnit -> IO ()
 analyze (CTranslUnit extdecls nodeinfo) = do
-	forM_ extdecls $ \case
+	forM_ extdecls $ \ extdecl -> case
 		CDeclExt decl   -> analyzeDecl decl
 		CFDefExt fundef -> analyzeFunDef fundef
-		CAsmExt asm _   -> error "Found CAsmExt"
+		CAsmExt asm _   -> notImplYet extdecl
 
 analyzeDecl (CDecl declspecs diss nodeinfo) = do
 	forM_ diss $ \case
 		_ -> return ()
 
+-- Possible InputValues is a list of value ranges
+type InputValues a = Any | Ranges [(a,a)]
+	deriving (Show,Eq)
+
+class SymbValueRepr a where
+	
+
 analyzeFunDef (CFunDef declspecs (CDeclr (Just (Ident name _ _)) _ _ _ _) cdecls stmt nodeinfo) = do
 	putStrLn "--------------------------------------"
 	print name
-	paths <- followPaths stmt
+	paths <- followStmt Map.empty stmt
 	print paths
+	
+followStmt inputvals stmt = case stmt of
+	CExpr (Just cexpr) nodeinfo -> followExpr inputvals cexpr
+	_ -> notImplYet stmt
 
-followPaths stmt = case stmt of
-	CExpr (Just cexpr) nodeinfo -> 
+followExpr inputvals cexpr = case cexpr of
+	CAssign assignop (CVar (Ident name _ _) _) assignedexpr _ -> 
+	_ -> notImplYet cexpr
+
