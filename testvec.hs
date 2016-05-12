@@ -40,74 +40,6 @@ analyzeDecl (CDecl declspecs diss nodeinfo) = do
 	forM_ diss $ \case
 		_ -> return ()
 
-{-
--- Possible InputValues is a list of value ranges
-data InputValues a = Any | Ranges [(a,a)]
-	deriving (Show,Eq)
-
-type InputTypes a = Map.Map Ident (CTypeSpecifier a)
-
-class SymbValueRepr a where
-	
-printIdent (Ident name _ _) = putStrLn name
-
-class (Show a) => ShowAST a where
-	showAST :: Int -> a -> [String]
-
-showIndent :: Int -> String -> [String]
-showIndent i s = [ concat (take i (repeat "| ")) ++ s ]
-showASTList :: (ShowAST a) => Int -> [a] -> [String]
-showASTList i l = showIndent i "[" ++ concatMap (showAST (i+1)) l ++ showIndent (i+1) "]"
-
-instance (Show a) => ShowAST (CFunctionDef a) where
-	showAST i (CFunDef declspecs cdeclr cdecls stmt _) =
-		showIndent i "CFunDef" ++
-		showASTList (i+1) declspecs ++
-		showAST (i+1) cdeclr ++
-		showASTList (i+1) cdecls ++
-		showAST (i+1) stmt
-
-instance (Show a) => ShowAST (CDeclarationSpecifier a) where
-	showAST i (CTypeSpec ctypespec) =
-		showIndent i "CTypeSpec" ++
-		showAST (i+1) ctypespec
-	showAST _ x = notImplYet x
-
-instance (Show a) => ShowAST (CTypeSpecifier a) where
-	showAST i (CIntType _) = showIndent i "int"
-
-instance (Show a) => ShowAST (CDeclarator a) where
-	showAST i (CDeclr mb_ident cderivdeclrs mb_strlit cattribs _) =
-		showIndent i "CDeclr" ++
-		showAST (i+1) mb_ident ++
-		showASTList (i+1) cderivdeclrs ++
-		showAST (i+1) mb_strlit ++
-		showASTList (i+1) cattribs
-
-instance (Show a) => ShowAST (CDeclaration a) where
-	showAST i (CDecl declspecs declinitexprs _) =
-		showIndent i "CDecl" ++
-		showASTList (i+1) declspecs ++
-		showASTList (i+1) declinitexprs
-
-instance (ShowAST a,ShowAST b,ShowAST c) => ShowAST (a,b,c) where
-	showAST i (a,b,c) =
-		showIndent i "(" ++
-		showAST (i+1) a ++
-		showIndent (i+1) "," ++
-		showAST (i+1) b ++
-		showIndent (i+1) "," ++
-		showAST (i+1) c ++
-		showIndent i ")"
-
-instance (ShowAST a) => ShowAST (Maybe a) where
-	showAST i (Just a) = showIndent i "Just" ++ showAST (i+1) a
-	showAST i Nothing  = showIndent i "Nothing"
-
-printAST ast = putStrLn (unlines $ showAST ast)
-
--}
-
 deriving instance Generic NodeInfo
 instance PrettyVal NodeInfo where
 	prettyVal nodeinfo = String ""
@@ -143,7 +75,6 @@ deriving instance Generic (CExpression a)
 instance PrettyVal (CExpression NodeInfo)
 deriving instance Generic (CArraySize a)
 instance PrettyVal (CArraySize NodeInfo)
-
 deriving instance Generic (CCompoundBlockItem a)
 instance PrettyVal (CCompoundBlockItem NodeInfo)
 deriving instance Generic (CAttribute a)
@@ -185,11 +116,16 @@ instance PrettyVal CIntFlag
 deriving instance Generic (Flags a)
 instance PrettyVal (Flags CIntFlag)
 
+data InputValues v = Any | Ranges [(v,v)] | Not [v]
+	deriving (Show,Eq)
+
+type InputTypes a = Map.Map Ident (CTypeSpecifier a)
+
 analyzeFunDef c@(CFunDef declspecs (CDeclr (Just (Ident name _ _)) derivdeclrs mb_strlit attrs _) cdecls stmt _) = do
 	putStrLn "--------------------------------------"
 	putStrLn $ dumpStr c
 	writeFile (name++".html") $ htmlPage defaultHtmlOpts (valToHtml defaultHtmlOpts $ prettyVal c)
---instance CFunctionDef
+
 {-
 	print c
 
