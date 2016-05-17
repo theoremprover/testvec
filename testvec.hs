@@ -122,11 +122,23 @@ data InputValues v = Any | Ranges [(v,v)] | Not [v]
 type InputTypes a = Map.Map Ident (CTypeSpecifier a)
 
 analyzeFunDef c@(CFunDef declspecs (CDeclr (Just (Ident name _ _)) derivdeclrs mb_strlit attrs _) cdecls stmt _) = do
-	putStrLn "--------------------------------------"
-	putStrLn $ dumpStr c
+	putStrLn $ "## CFunDef " ++ name
+--	putStrLn $ dumpStr c
 	writeFile (name++".html") $ htmlPage defaultHtmlOpts (valToHtml defaultHtmlOpts $ prettyVal c)
 
+	let
+		[ CFunDeclr (Right (paramdecls,_)) _ _ ] = derivdeclrs
+		parameters = map (\ (CDecl [CTypeSpec ty] [(Just (CDeclr (Just ident) _ _ _ _),_,_)] _) -> (ident,(ty,Any)) ) paramdecls
+	print parameters
 {-
+	inputvals <- followStmt (Map.fromList $ map () parameters) stmt
+	forM_ inputvals print
+
+followStmt inputs stmt = case stmt of
+	CExpr (Just cexpr) nodeinfo -> followExpr inputs cexpr
+	_ -> notImplYet stmt
+
+
 	print c
 
 	paths <- followStmt inputs stmt
@@ -135,10 +147,6 @@ analyzeFunDef c@(CFunDef declspecs (CDeclr (Just (Ident name _ _)) derivdeclrs m
 	inputs = concatMap extracttype declspecs
 	extracttype declspec = case declspec of
 		CTypeSpec ctypespec -> 
-
-followStmt inputs stmt = case stmt of
-	CExpr (Just cexpr) nodeinfo -> followExpr inputs cexpr
-	_ -> notImplYet stmt
 
 followExpr inputs cexpr = case cexpr of
 	CAssign assignop (CVar ident _) assignedexpr _ -> 
