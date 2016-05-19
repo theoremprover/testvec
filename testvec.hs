@@ -123,28 +123,38 @@ type InputTypes a = Map.Map Ident (CTypeSpecifier a)
 
 showType ty = case ty of
 	CIntType _ -> "int"
+	_ -> notImplYet ty
 
 printParams params = do
 	forM_ params $ \ (Ident name _ _,(ty,vals)) -> do
-		putStrLn 
+		putStrLn $ printf "  %12s :: %s  in  %s" name (showType ty) (show vals)
 
 analyzeFunDef c@(CFunDef declspecs (CDeclr (Just (Ident name _ _)) derivdeclrs mb_strlit attrs _) cdecls stmt _) = do
 	putStrLn $ "## CFunDef " ++ name
 --	putStrLn $ dumpStr c
 	writeFile (name++".html") $ htmlPage defaultHtmlOpts (valToHtml defaultHtmlOpts $ prettyVal c)
 
-	let
-		[ CFunDeclr (Right (paramdecls,_)) _ _ ] = derivdeclrs
-		params = map (\ (CDecl [CTypeSpec ty] [(Just (CDeclr (Just ident) _ _ _ _),_,_)] _) -> (ident,(ty,Not [] :: InputValues Int)) ) paramdecls
+	let [ CFunDeclr (Right (paramdecls,_)) _ _ ] = derivdeclrs
+	params <- foldlM () [] paramdecls
 	mapM_ print $ map (\(Ident name _ _,tv) -> (name,tv)) parameters
 	inputvals <- followStmt params stmt
-	mapM_ print inputvals
+	printParams inputvals
+
+followDecl params (CDecl [CTypeSpec ty] [(Just (CDeclr (Just ident) _ _ _ _),_,_)] _) =
+	return $ (ident,(ty,Not [])) : params
 
 followStmt params stmt = case stmt of
-	CCompound [] blockitems _ -> followBlockItems inputs blockitems
-	CExpr (Just cexpr) nodeinfo -> followExpr inputs cexpr
+	CCompound [] blockitems _ -> followBlockItems params blockitems
+	CBlockDecl 
+	CExpr (Just cexpr) nodeinfo -> followExpr params cexpr
 	_ -> notImplYet stmt
 
+followBlockItems params [] = return params
+followBlockItems params (blockitem:bss) = case blockitem of
+	CBlockStmt stmt -> do
+		params' <- followStmt params stmt
+		followBlockItems params' bss
+	_ -> notImplYet blockitem
 
 followExpr params cexpr = case cexpr of
 	CAssign assignop (CVar ident _) assignedexpr _ -> 
