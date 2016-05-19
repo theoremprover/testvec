@@ -116,10 +116,17 @@ instance PrettyVal CIntFlag
 deriving instance Generic (Flags a)
 instance PrettyVal (Flags CIntFlag)
 
-data InputValues v = Any | Ranges [(v,v)] | Not [v]
+data InputValues v = Ranges [(v,v)] | Not [v]
 	deriving (Show,Eq)
 
 type InputTypes a = Map.Map Ident (CTypeSpecifier a)
+
+showType ty = case ty of
+	CIntType _ -> "int"
+
+printParams params = do
+	forM_ params $ \ (Ident name _ _,(ty,vals)) -> do
+		putStrLn 
 
 analyzeFunDef c@(CFunDef declspecs (CDeclr (Just (Ident name _ _)) derivdeclrs mb_strlit attrs _) cdecls stmt _) = do
 	putStrLn $ "## CFunDef " ++ name
@@ -128,27 +135,17 @@ analyzeFunDef c@(CFunDef declspecs (CDeclr (Just (Ident name _ _)) derivdeclrs m
 
 	let
 		[ CFunDeclr (Right (paramdecls,_)) _ _ ] = derivdeclrs
-		parameters = map (\ (CDecl [CTypeSpec ty] [(Just (CDeclr (Just ident) _ _ _ _),_,_)] _) -> (ident,(ty,Any)) ) paramdecls
-	print parameters
-{-
-	inputvals <- followStmt (Map.fromList $ map () parameters) stmt
-	forM_ inputvals print
+		params = map (\ (CDecl [CTypeSpec ty] [(Just (CDeclr (Just ident) _ _ _ _),_,_)] _) -> (ident,(ty,Not [] :: InputValues Int)) ) paramdecls
+	mapM_ print $ map (\(Ident name _ _,tv) -> (name,tv)) parameters
+	inputvals <- followStmt params stmt
+	mapM_ print inputvals
 
-followStmt inputs stmt = case stmt of
+followStmt params stmt = case stmt of
+	CCompound [] blockitems _ -> followBlockItems inputs blockitems
 	CExpr (Just cexpr) nodeinfo -> followExpr inputs cexpr
 	_ -> notImplYet stmt
 
 
-	print c
-
-	paths <- followStmt inputs stmt
-	print paths
-	where
-	inputs = concatMap extracttype declspecs
-	extracttype declspec = case declspec of
-		CTypeSpec ctypespec -> 
-
-followExpr inputs cexpr = case cexpr of
+followExpr params cexpr = case cexpr of
 	CAssign assignop (CVar ident _) assignedexpr _ -> 
 	_ -> notImplYet cexpr
--}
