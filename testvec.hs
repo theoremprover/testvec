@@ -135,7 +135,7 @@ analyzeFunDef c@(CFunDef declspecs (CDeclr (Just (Ident name _ _)) derivdeclrs m
 	writeFile (name++".html") $ htmlPage defaultHtmlOpts (valToHtml defaultHtmlOpts $ prettyVal c)
 
 	let [ CFunDeclr (Right (paramdecls,_)) _ _ ] = derivdeclrs
-	params <- foldlM () [] paramdecls
+	params <- foldlM followDecl [] paramdecls
 	mapM_ print $ map (\(Ident name _ _,tv) -> (name,tv)) parameters
 	inputvals <- followStmt params stmt
 	printParams inputvals
@@ -145,7 +145,7 @@ followDecl params (CDecl [CTypeSpec ty] [(Just (CDeclr (Just ident) _ _ _ _),_,_
 
 followStmt params stmt = case stmt of
 	CCompound [] blockitems _ -> followBlockItems params blockitems
-	CBlockDecl 
+	CBlockDecl (
 	CExpr (Just cexpr) nodeinfo -> followExpr params cexpr
 	_ -> notImplYet stmt
 
