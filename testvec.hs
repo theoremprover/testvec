@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase,StandaloneDeriving,FlexibleInstances,DeriveGeneric #-}
+{-# LANGUAGE LambdaCase,StandaloneDeriving,FlexibleInstances,DeriveGeneric,FlexibleContexts #-}
 
 module Main where
 
@@ -8,6 +8,7 @@ import Language.C.System.GCC   -- Preprocessor
 import Language.C.Data.Ident
 import qualified Data.Map as Map
 import Control.Monad
+import Data.Foldable (foldlM)
 import System.Environment
 import Text.Printf
 import Text.PrettyPrint
@@ -116,15 +117,23 @@ instance PrettyVal CIntFlag
 deriving instance Generic (Flags a)
 instance PrettyVal (Flags CIntFlag)
 
-data InputValues v = Ranges [(v,v)] | Not [v]
+data Val a = where
+	IntVal :: Int -> Val Int
+	StringVal :: String -> Val String
+	FloatVal :: Float -> Val Floar
+	CharVal Char
 	deriving (Show,Eq)
 
-type InputTypes a = Map.Map Ident (CTypeSpecifier a)
+data InputVals = Not [Val]
+
+--type InputTypes a = Map.Map Ident (CTypeSpecifier a)
+type Params = [(Ident,(CTypeSpecifier NodeInfo,InputValues))]
 
 showType ty = case ty of
 	CIntType _ -> "int"
 	_ -> notImplYet ty
 
+printParams :: (Show v,Show (CTypeSpecifier NodeInfo)) => Params v -> IO ()
 printParams params = do
 	forM_ params $ \ (Ident name _ _,(ty,vals)) -> do
 		putStrLn $ printf "  %12s :: %s  in  %s" name (showType ty) (show vals)
@@ -136,16 +145,23 @@ analyzeFunDef c@(CFunDef declspecs (CDeclr (Just (Ident name _ _)) derivdeclrs m
 
 	let [ CFunDeclr (Right (paramdecls,_)) _ _ ] = derivdeclrs
 	params <- foldlM followDecl [] paramdecls
-	mapM_ print $ map (\(Ident name _ _,tv) -> (name,tv)) parameters
+	printParams params
+{-
 	inputvals <- followStmt params stmt
 	printParams inputvals
+-}
 
+followDecl :: Params -> CDeclaration NodeInfo -> IO Params
 followDecl params (CDecl [CTypeSpec ty] [(Just (CDeclr (Just ident) _ _ _ _),_,_)] _) =
 	return $ (ident,(ty,Not [])) : params
 
+{-
 followStmt params stmt = case stmt of
 	CCompound [] blockitems _ -> followBlockItems params blockitems
-	CBlockDecl (
+	CBlockDecl cdecl -> do
+		params' <- followDecl params cdecl
+		-- TODO
+		return params'
 	CExpr (Just cexpr) nodeinfo -> followExpr params cexpr
 	_ -> notImplYet stmt
 
@@ -157,5 +173,6 @@ followBlockItems params (blockitem:bss) = case blockitem of
 	_ -> notImplYet blockitem
 
 followExpr params cexpr = case cexpr of
-	CAssign assignop (CVar ident _) assignedexpr _ -> 
-	_ -> notImplYet cexpr
+	CAssign assignop (CVar ident _) assignedexpr _ -> return params
+	_ -> return params --notImplYet cexpr
+-}
