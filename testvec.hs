@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase,StandaloneDeriving,FlexibleInstances,DeriveGeneric,FlexibleContexts #-}
+{-# LANGUAGE LambdaCase,StandaloneDeriving,FlexibleInstances,DeriveGeneric,FlexibleContexts,GADTs #-}
 
 module Main where
 
@@ -117,23 +117,33 @@ instance PrettyVal CIntFlag
 deriving instance Generic (Flags a)
 instance PrettyVal (Flags CIntFlag)
 
-data Val a = where
-	IntVal :: Int -> Val Int
+data Val a where
+	IntVal    :: Int    -> Val Int
 	StringVal :: String -> Val String
-	FloatVal :: Float -> Val Floar
-	CharVal Char
+	FloatVal  :: Float  -> Val Float
+	CharVal   :: Char   -> Val Char
+
+instance (Show a) => Show (Val a)
+
+{-
+instance (Show a) => Show (Val a) where
+	show (IntVal i) = show i
+	show (StringVal s) = show s
+	show (FloatVal f) = show f
+	show (CharVal c) = show c
+-}
+
+data InputVals = Any
 	deriving (Show,Eq)
 
-data InputVals = Not [Val]
-
 --type InputTypes a = Map.Map Ident (CTypeSpecifier a)
-type Params = [(Ident,(CTypeSpecifier NodeInfo,InputValues))]
+type Params = [(Ident,(CTypeSpecifier NodeInfo,InputVals))]
 
 showType ty = case ty of
 	CIntType _ -> "int"
 	_ -> notImplYet ty
 
-printParams :: (Show v,Show (CTypeSpecifier NodeInfo)) => Params v -> IO ()
+printParams :: (Show (CTypeSpecifier NodeInfo)) => Params -> IO ()
 printParams params = do
 	forM_ params $ \ (Ident name _ _,(ty,vals)) -> do
 		putStrLn $ printf "  %12s :: %s  in  %s" name (showType ty) (show vals)
@@ -153,7 +163,7 @@ analyzeFunDef c@(CFunDef declspecs (CDeclr (Just (Ident name _ _)) derivdeclrs m
 
 followDecl :: Params -> CDeclaration NodeInfo -> IO Params
 followDecl params (CDecl [CTypeSpec ty] [(Just (CDeclr (Just ident) _ _ _ _),_,_)] _) =
-	return $ (ident,(ty,Not [])) : params
+	return $ (ident,(ty,Any)) : params
 
 {-
 followStmt params stmt = case stmt of
