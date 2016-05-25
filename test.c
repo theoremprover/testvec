@@ -14,7 +14,9 @@ int f(int x,int m)
 int m(int x)
 {
 	int res = 0;
+	// res=0
 	int y = x + 1;
+	// y=x+1
 
 	if(f(y,2)>0)
 	{
