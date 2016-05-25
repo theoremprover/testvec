@@ -124,7 +124,6 @@ data Val a where
 	CharVal   :: Char   -> Val Char
 
 instance (Show a) => Show (Val a)
-
 {-
 instance (Show a) => Show (Val a) where
 	show (IntVal i) = show i
