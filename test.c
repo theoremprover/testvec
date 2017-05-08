@@ -11,12 +11,14 @@ int f(int x,int m)
 	return y;
 }
 
+// °f(y) = [ [ x := Any, m := (y-1)/x ], [ m := Any, x := (y-1)/m ] ]
+
 int m(int x)
 {
 	int res = 0;
 	// res=0
 	int y = x + 1;
-	// y=x+1
+	// x = y - 1
 
 	if(f(y,2)>0)
 	{
