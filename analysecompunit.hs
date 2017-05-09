@@ -63,22 +63,28 @@ type Env = [(String,Values)]
 
 type AnalyseM a = StateT GlobalScope IO a
 
-analyseFunM :: Env -> String -> AnalyseM Env
-analyseFunM env funname = do
+--analyseFunM :: Env -> String -> AnalyseM Env
+analyseFunM funname env = do
 	mb_fundef <- gets (lookup funname)
 	case mb_fundef of
 		Nothing -> error $ "Could not find function " ++ show funname
-		Just (FunDef funname_decl stmt a) -> case stmt of
-			CIf cond if_stmt else_stmt a -> analyseBoolExpr
-			CReturn mb_expr a -> [show mb_expr]
-			CCompound labels compound_items a -> analyseCompoundItems vals (reverse compound_items) a
-			_ -> notImpl stmt
-{-
+		Just (FunDef funname_decl stmt a) -> analyseStmt env stmt
 
-analyseCompoundItems vals (compound_item:cis) a = case compound_item of
-	CBlockStmt stmt -> analyseStmt vals stmt
-	CBlockDecl (CDecl _ decls a) -> analyseDecls vals (reverse decls) a
-	_ -> notImpl compound_item
+analyseStmt stmt env = case stmt of
+	CIf cond if_stmt else_stmt a -> do
+		return $ show cond
+--	CReturn mb_expr a -> [show mb_expr]
+	CCompound labels compound_items a -> analyseCompoundItems compound_items env
+	_ -> return [] --notImpl stmt
+
+analyseCompoundItems cis env = foldrM analyseCompoundItem env cis
+
+analyseCompoundItem compound_item env = case compound_item of
+	CBlockStmt stmt -> analyseStmt env stmt
+	--CBlockDecl (CDecl _ decls a) -> analyseDecls vals (reverse decls) a
+	_ -> return [] --notImpl compound_item
+
+{-
 
 analyseDecls vals (decl:decls) a =
 

@@ -13,8 +13,12 @@ int f(int x,int y)
 	int f = 1;
 	if(x<0)
 	{
+// vals = [
 		f = -1;
+// vals = [f=Any]
 	}
+// vals = [f=Any]
+
 /*
 	for(int i=1;i<=abs(x);i++)
 	{
@@ -23,6 +27,7 @@ int f(int x,int y)
 */
 
 	return f /*erg*/;
+// vals = [erg=Any]
 }
 
 int main()
