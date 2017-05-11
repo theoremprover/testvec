@@ -48,6 +48,17 @@ int main()
 
 int h(int x)
 {
+// [ x=6 ]
 	return x-1;
+// [ return=5 ]
 }
 
+int h2(int x,int y)
+{
+// [ x=6 ]
+	return x-2*y;
+// [ return=5 ]
+}
+/*
+5 = x-2*y
+*/
