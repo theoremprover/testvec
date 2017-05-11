@@ -6,42 +6,6 @@ int abs(int x)
 	else return 0-x;
 }
 
-// Analyse mode
-int g_ana_abs(int x,int y)
-{
-	// [y=Any,x=2],[y=Any,x=1]
-	int e = y;
-
-	// [e=Any,x=2],[e=Any,x=1]
-	if(x>abs(y))
-	{
-		// [e = Any]
-		e = e * 2;
-	}
-
-	// [e = Any]
-	return e-1;
-	// [erg = Any]
-}
-
-// Analyse mode
-int g_ana(int x,int y)
-{
-	// [y=Any,x=2],[y=Any,x=1]
-	int e = y;
-
-	// [e=Any,x=2],[e=Any,x=1]
-	if(x>1)
-	{
-		// [e = Any]
-		e = e * 2;
-	}
-
-	// [e = Any]
-	return e-1;
-	// [erg = Any]
-}
-
 // Reverse mode
 int g_rev(int x,int y)
 {
@@ -81,3 +45,9 @@ int main()
 {
 	printf("%i",f(-2,-3));
 }
+
+int h(int x)
+{
+	return x-1;
+}
+
